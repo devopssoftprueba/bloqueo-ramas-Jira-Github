@@ -36,7 +36,7 @@ app.post('/webhook', async (req, res) => {
             return res.status(200).send('No se requiere acción');
         }
 
-        const nuevoEstado = statusChange.toString || statusChange.to; // Fallback
+        const nuevoEstado = statusChange.toString || statusChange.to;
         console.log(`🔄 Estado cambiado a: ${nuevoEstado}`);
 
         if (!nuevoEstado || nuevoEstado.toLowerCase() !== ESTADO_OBJETIVO.toLowerCase()) {
@@ -53,12 +53,14 @@ app.post('/webhook', async (req, res) => {
             await axios.put(
                 url,
                 {
+                    enforce_admins: true,
+                    required_pull_request_reviews: {
+                        required_approving_review_count: 1
+                    },
                     required_status_checks: null,
-                    enforce_admins: false,
-                    required_pull_request_reviews: null,
                     restrictions: {
-                        users: [],
-                        teams: []
+                        users: [], // Nadie puede hacer push directo
+                        teams: []  // Nadie puede hacer push directo
                     }
                 },
                 {
