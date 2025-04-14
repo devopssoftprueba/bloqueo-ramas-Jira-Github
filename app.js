@@ -1,5 +1,3 @@
-// app.js
-
 const express = require('express');
 const axios = require('axios');
 const app = express();
@@ -10,7 +8,8 @@ app.use(express.json());
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const ORGANIZATION = 'devopssoftprueba';
 const REPOSITORIOS = ['SitioUsuarioOnline', 'Backend'];
-const ESTADO_OBJETIVO = 'PASAR A PRODUCCIÓN';
+const ESTADO_BLOQUEO = 'PRUEBAS QA';
+const ESTADO_DESBLOQUEO = 'DESARROLLO';
 
 // Endpoint para recibir eventos de Jira
 app.post('/webhook', async (req, res) => {
@@ -39,46 +38,64 @@ app.post('/webhook', async (req, res) => {
         const nuevoEstado = statusChange.toString || statusChange.to;
         console.log(`🔄 Estado cambiado a: ${nuevoEstado}`);
 
-        if (!nuevoEstado || nuevoEstado.toLowerCase() !== ESTADO_OBJETIVO.toLowerCase()) {
-            console.log(`⏭️ Estado no coincide con "${ESTADO_OBJETIVO}"`);
-            return res.status(200).send('No se requiere acción');
-        }
+        const branchName = `feature/${issueKey}`;
 
         for (const repo of REPOSITORIOS) {
-            const branchName = `feature/${issueKey}`;
             const url = `https://api.github.com/repos/${ORGANIZATION}/${repo}/branches/${branchName}/protection`;
 
-            console.log(`🔐 Intentando proteger rama: ${branchName} en repositorio: ${repo}`);
+            if (nuevoEstado.toLowerCase() === ESTADO_BLOQUEO.toLowerCase()) {
+                console.log(`🔐 Protegiendo rama ${branchName} en ${repo} por estado "${nuevoEstado}"`);
 
-            await axios.put(
-                url,
-                {
-                    enforce_admins: true,
-                    required_pull_request_reviews: {
-                        required_approving_review_count: 1
+                await axios.put(
+                    url,
+                    {
+                        enforce_admins: true,
+                        required_pull_request_reviews: {
+                            required_approving_review_count: 1
+                        },
+                        required_status_checks: null,
+                        restrictions: {
+                            users: [],
+                            teams: []
+                        }
                     },
-                    required_status_checks: null,
-                    restrictions: {
-                        users: [], // Nadie puede hacer push directo
-                        teams: []  // Nadie puede hacer push directo
+                    {
+                        headers: {
+                            Authorization: `Bearer ${GITHUB_TOKEN}`,
+                            Accept: 'application/vnd.github.v3+json'
+                        }
                     }
-                },
-                {
-                    headers: {
-                        Authorization: `Bearer ${GITHUB_TOKEN}`,
-                        Accept: 'application/vnd.github.v3+json'
-                    }
-                }
-            );
+                );
 
-            console.log(`✅ Rama ${branchName} protegida en repositorio: ${repo}`);
+                console.log(`✅ Rama ${branchName} protegida en ${repo}`);
+            }
+
+            else if (nuevoEstado.toLowerCase() === ESTADO_DESBLOQUEO.toLowerCase()) {
+                console.log(`🔓 Eliminando protección de rama ${branchName} en ${repo} por estado "${nuevoEstado}"`);
+
+                await axios.delete(
+                    url,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${GITHUB_TOKEN}`,
+                            Accept: 'application/vnd.github.v3+json'
+                        }
+                    }
+                );
+
+                console.log(`✅ Protección eliminada para rama ${branchName} en ${repo}`);
+            }
+
+            else {
+                console.log(`⏭️ Estado "${nuevoEstado}" no requiere acción en ${repo}`);
+            }
         }
 
-        res.status(200).send('Ramas protegidas correctamente');
+        res.status(200).send('Acción realizada correctamente según el estado');
     } catch (error) {
         const errMsg = error.response?.data || error.message || error;
         console.error('❌ Error procesando el webhook:', errMsg);
-        res.status(500).send('Error protegiendo ramas');
+        res.status(500).send('Error procesando protección de rama');
     }
 });
 
