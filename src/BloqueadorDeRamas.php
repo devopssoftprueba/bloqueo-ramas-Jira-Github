@@ -39,6 +39,8 @@ class BloqueadorDeRamas
         // La URL incluye el nombre del repositorio y la rama que queremos proteger.
         $url = "https://api.github.com/repos/$this->repositorio/branches/$rama/protection";
 
+        error_log("Token enviado: ['github_token']");
+
         // Si '$bloquear' es 'true', se crea un array con los datos necesarios para bloquear la rama.
         // Si '$bloquear' es 'false', se establece '$data' como 'null', lo que indicará que no hay protección (desbloquear).
         $data = $bloquear ? [
