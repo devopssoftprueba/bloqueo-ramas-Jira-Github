@@ -59,7 +59,7 @@ class BloqueadorDeRamas
 
         // Se definen los encabezados HTTP para la solicitud. Estos incluyen el token de autenticación, el tipo de contenido que aceptamos y el nombre de usuario de la aplicación.
         $headers = [
-            "Authorization: token $this->token",  // El token de GitHub para autenticación.
+            "Authorization: Bearer $this->token",  // El token de GitHub para autenticación.
             'Accept: application/vnd.github+json',  // Especifica el tipo de respuesta que esperamos de GitHub.
             'User-Agent: bloqueo-webhook-jira'  // Un nombre de agente de usuario para identificar la aplicación que hace la solicitud.
         ];
