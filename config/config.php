@@ -2,7 +2,7 @@
 //archivo para configurar el funcionamiento del bloqueo de ramas en este archivo se configuran tokens de github, repositorios que se bloquearan
 //junto con los estados que bloquearan las ramas
 return [
-    'github_token' => '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',
+    'github_token' => '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',
     'repositorios' => [
         'devopssoftprueba/Backend',
         'devopssoftprueba/SitioUsuarioOnline'
