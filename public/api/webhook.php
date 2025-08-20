@@ -12,6 +12,8 @@ use Dotenv\Dotenv;
 $dotenv = Dotenv::createImmutable(__DIR__ . '/../../');
 $dotenv->load();
 
+error_log("TOKEN desde ENV: " . ($_ENV['GITHUB_TOKEN'] ?? 'NO DEFINIDO'));
+
 // 2. Cargar configuración (ya puede usar $_ENV)
 $config = require __DIR__ . '/../../config/config.php';
 
