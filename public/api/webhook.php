@@ -1,6 +1,22 @@
 <?php
 // El webhook es un receptor escucha los mensajes que Jira envía cuando cambia el estado de una historia (issue). Según ese estado, decide si debe bloquear o desbloquear una rama en GitHub.
 
+
+declare(strict_types=1);
+
+require_once __DIR__ . '/../../vendor/autoload.php';
+
+use Dotenv\Dotenv;
+
+// 1. Cargar variables de entorno
+$dotenv = Dotenv::createImmutable(__DIR__ . '/../../');
+$dotenv->load();
+
+error_log("TOKEN desde ENV: " . ($_ENV['GITHUB_TOKEN'] ?? 'NO DEFINIDO'));
+
+// 2. Cargar configuración (ya puede usar $_ENV)
+$config = require __DIR__ . '/../../config/config.php';
+
 require_once __DIR__ . '/../../src/PeticionJira.php'; // Importa la clase que procesa los datos del payload de Jira
 require_once __DIR__ . '/../../src/BloqueadorDeRamas.php'; // tiene metodos para bloquear o desbloquear ramas usando la API de GitHub.
 $config = require __DIR__ . '/../../config/config.php'; // tiene lo configurable token, estados que activan el bloqueo, rutas de log, repos, etc.
