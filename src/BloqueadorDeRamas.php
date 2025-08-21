@@ -11,7 +11,7 @@ class BloqueadorDeRamas
 
     public function __construct($token, $repositorio) // Acepta dos parámetros: '$token' y '$repositorio', y los asigna a las propiedades de la clase.
     {
-        $this->token = $token;  // Se guarda el valor del parámetro '$token' en la propiedad '$token' del objeto.
+        $this->token = trim($token);  // Asegurarnos de que no hay espacios
         $this->repositorio = $repositorio;  // Se guarda el valor del parámetro '$repositorio' en la propiedad '$repositorio' del objeto.
     }
 
@@ -39,7 +39,6 @@ class BloqueadorDeRamas
         // La URL incluye el nombre del repositorio y la rama que queremos proteger.
         $url = "https://api.github.com/repos/$this->repositorio/branches/$rama/protection";
 
-        error_log("Token enviado: ['github_token']");
 
         // Si '$bloquear' es 'true', se crea un array con los datos necesarios para bloquear la rama.
         // Si '$bloquear' es 'false', se establece '$data' como 'null', lo que indicará que no hay protección (desbloquear).
@@ -57,11 +56,13 @@ class BloqueadorDeRamas
             'restrictions' => null,  // No hay restricciones específicas para las ramas.
         ] : null;  // Si no se bloquea, se devuelve 'null' porque no hay datos de protección.
 
-        // Se definen los encabezados HTTP para la solicitud. Estos incluyen el token de autenticación, el tipo de contenido que aceptamos y el nombre de usuario de la aplicación.
+        // Se definen los encabezados HTTP para la solicitud.
         $headers = [
-            "Authorization: Bearer $this->token",  // El token de GitHub para autenticación.
-            'Accept: application/vnd.github+json',  // Especifica el tipo de respuesta que esperamos de GitHub.
-            'User-Agent: bloqueo-webhook-jira'  // Un nombre de agente de usuario para identificar la aplicación que hace la solicitud.
+            "Authorization: Bearer " . trim($this->token),
+            "Accept: application/vnd.github+json",
+            "User-Agent: php-bloqueo-ramas",
+            "Content-Type: application/json",
+            "X-GitHub-Api-Version: 2022-11-28"
         ];
 
         // Se inicializa una sesión CURL.
@@ -72,6 +73,7 @@ class BloqueadorDeRamas
             CURLOPT_RETURNTRANSFER => true,  // Indica que la respuesta debe ser devuelta como una cadena.
             CURLOPT_CUSTOMREQUEST => $bloquear ? 'PUT' : 'DELETE',  // Si '$bloquear' es 'true', se usa 'PUT' (para bloquear), de lo contrario 'DELETE' (para desbloquear).
             CURLOPT_HTTPHEADER => $headers,  // Se añaden los encabezados HTTP definidos anteriormente.
+            CURLOPT_VERBOSE => true
         ]);
 
         // Si '$bloquear' es 'true', se añade los datos de protección ('$data') a la solicitud cURL.
@@ -81,9 +83,13 @@ class BloqueadorDeRamas
 
         // Se ejecuta la solicitud cURL y se guarda la respuesta en '$respuesta'.
         $respuesta = curl_exec($ch);
-
-        // Se obtiene el código de estado HTTP de la respuesta.
         $codigo = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+        // Obtener el error específico si hay uno
+        $error = null;
+        if ($respuesta === false) {
+            $error = curl_error($ch);
+        }
 
         // Se cierra la sesión cURL.
         curl_close($ch);
@@ -93,7 +99,8 @@ class BloqueadorDeRamas
             return [
                 'codigo' => $codigo,  // El código de estado HTTP.
                 'respuesta' => $respuesta,  // La respuesta de la API.
-                'error' => 'Hubo un problema al ' . ($bloquear ? 'bloquear' : 'desbloquear') . ' la rama.'  // Mensaje de error.
+                'error' => $error ?: 'Hubo un problema al ' . ($bloquear ? 'bloquear' : 'desbloquear') . ' la rama.',  // Mensaje de error.
+                'url' => $url // Incluir la URL para debugging
             ];
         }
 

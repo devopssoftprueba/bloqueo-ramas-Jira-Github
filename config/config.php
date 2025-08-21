@@ -1,8 +1,13 @@
 <?php
 //archivo para configurar el funcionamiento del bloqueo de ramas en este archivo se configuran tokens de github, repositorios que se bloquearan
 //junto con los estados que bloquearan las ramas
+require_once __DIR__ . '/../vendor/autoload.php';
+
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/..');
+$dotenv->load();
+
 return [
-    'github_token' => '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',
+    'github_token' => $_ENV['GITHUB_TOKEN'],
     'repositorios' => [
         'devopssoftprueba/Backend',
         'devopssoftprueba/SitioUsuarioOnline'
