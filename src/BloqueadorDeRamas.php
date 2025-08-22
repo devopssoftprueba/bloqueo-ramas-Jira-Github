@@ -1,7 +1,5 @@
 <?php
-// src/BloqueadorDeRamas.php
 
-// Se define una clase llamada 'BloqueadorDeRamas'.
 class BloqueadorDeRamas
 {
     // Se definen las propiedades token: sería la autenticación de github y repositorio: serían los repositorios que se van a bloquear.
